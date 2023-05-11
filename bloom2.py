@@ -2,7 +2,6 @@
 import math
 import hashlib
 import bitarray
-from concurrent.futures import ThreadPoolExecutor
 
 def loadRock():
     loadedArr = []
@@ -79,53 +78,45 @@ FP = 0
 TN = 0
 FN = 0
 
-# Usage example
-n = 1000  # Expected number of elements
-p = 0.01  # Desired false positive probability
-
-bloom_filter = BloomFilter(n, p)
-# bloom_filter.add("hello")  # Add "hello" to the filter
-# bloom_filter.add("world")  # Add "world" to the filter
-
-# print("hello", bloom_filter.contains("hello"))  # Check if "hello" might be in the filter
-# print("world", bloom_filter.contains("world"))  # Check if "world" might be in the filter
-# print("unknown", bloom_filter.contains("unknown"))  # Check if "unknown" might be in the filter
-
 rockArr = loadRock()
-# rockArr = ['123456', '12345', '123456789', 'password', 'iloveyou', 'princess', '1234567', 'rockyou', '12345678', 'abc123']
+
 
 dictArr = loadDict()
-# dictArr = ['!', '!!', '!!!!!!', '!!!!!!', '!!!!!!!', '!!!!!!!!', '!!!!!!!!!!', '!!!gerard!!!', '!!!sara', '!"£$%^']
+
+
+rockSet = set(rockArr)
+
+# Usage example
+n = len(rockArr)  # Expected number of elements
+p = 0.5  # Desired false positive probability
+
+bloom_filter = BloomFilter(n, p)
+
+
+
 
 print("hasing")
 
-with ThreadPoolExecutor() as executor:
-    for rString in rockArr:
-        print("hashing", rString)
-        executor.submit(bloom_filter.add, rString)
+for rString in rockArr:
+    print("hashing", rString)
+    bloom_filter.add(rString)
 
-
-with ThreadPoolExecutor() as executor:
-    futures = {executor.submit(bloom_filter.contains, dString): dString for dString in dictArr}
-
-for future in futures:
-    dString = futures[future]
+for dString in dictArr:
     print("checking", dString)
-    contained = future.result()
+
+    contained = bloom_filter.contains(dString)
 
     if contained == "maybe":
-        if dString in rockArr:
+        if dString in rockSet:  # Use the set for lookup instead of the list
             TP += 1
         else: 
             FP += 1
     else:
-        if dString in rockArr:
+        if dString in rockSet:  # Use the set for lookup instead of the list
             FN += 1
         else:
             TN += 1
     print(contained)
-
-    
 
 print("TP", TP)
 print("FP", FP)
